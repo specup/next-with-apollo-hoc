@@ -8,7 +8,21 @@ import { ApolloLink } from 'apollo-link'
 import { HttpLink } from 'apollo-link-http'
 import { ApolloProvider } from '@apollo/react-common'
 import { getDataFromTree as apolloGetDataFromTree } from '@apollo/react-ssr'
+import { DocumentNode } from 'graphql'
+import gql from 'graphql-tag'
 import withApollo from 'next-with-apollo'
+
+const uriTypeDefs = gql`
+  type Query {
+    __GRAPHQL_URI__: String!
+  }
+`
+
+const uriQuery = gql`
+  query {
+    __GRAPHQL_URI__ @client
+  }
+`
 
 const isBrowser = typeof window !== 'undefined'
 
@@ -32,10 +46,11 @@ interface onRequestInitParams {
 export interface WithApolloHOCOptions
   extends Omit<
     Partial<ApolloClientOptions<any>>,
-    'ssrMode' | 'cache' | 'link'
+    'ssrMode' | 'cache' | 'link' | 'typeDefs'
   > {
   uri: string
   link?: (defaultLink: ApolloLink, headers: IncomingHttpHeaders) => ApolloLink
+  typeDefs?: DocumentNode | DocumentNode[]
   treeForData?: (tree: ReactNode) => ReactNode
   onRequestInit?: (params: onRequestInitParams) => Promise<any>
   render?: (pageOrApp: ReactNode) => ReactNode
@@ -44,6 +59,8 @@ export interface WithApolloHOCOptions
 function withApolloHOC({
   uri,
   link = defaultInitLink,
+  typeDefs = [],
+  resolvers = [],
   treeForData = defaultTreeForData,
   onRequestInit,
   render = defaultRender,
@@ -56,10 +73,24 @@ function withApolloHOC({
     return apolloGetDataFromTree(treeForData(tree), context)
   }
 
+  const uriResolvers = {
+    Query: {
+      __GRAPHQL_URI__: () => uri,
+    },
+  }
+
   const apolloHOC = withApollo(
     ({ initialState, headers }) => {
+      const cache = new InMemoryCache().restore(initialState)
+
+      let finalURI = uri
+      if (isBrowser) {
+        const { __GRAPHQL_URI__ } = cache.readQuery({ query: uriQuery })
+        finalURI = __GRAPHQL_URI__
+      }
+
       const httpLink = new HttpLink({
-        uri,
+        uri: finalURI,
         credentials: 'include', // Additional fetch() options like `credentials` or `headers`
         headers: {
           ...headers,
@@ -70,7 +101,15 @@ function withApolloHOC({
       return new ApolloClient({
         ssrMode: !isBrowser, // Disables forceFetch on the server (so queries are only run once)
         link: link(httpLink, headers),
-        cache: new InMemoryCache().restore(initialState),
+        cache,
+        typeDefs: [
+          uriTypeDefs,
+          ...(Array.isArray(typeDefs) ? typeDefs : [typeDefs]),
+        ],
+        resolvers: [
+          uriResolvers,
+          ...(Array.isArray(resolvers) ? resolvers : [resolvers]),
+        ],
         ...other,
       })
     },
@@ -89,9 +128,16 @@ function withApolloHOC({
     WithApolloHOC.getInitialProps = async (pageCtx: any) => {
       const ctx = 'Component' in pageCtx ? pageCtx.ctx : pageCtx
 
-      if (!isBrowser && onRequestInit) {
+      if (!isBrowser) {
         const apolloClient: ApolloClient<any> = ctx.apolloClient
-        await onRequestInit({ apolloClient, ctx })
+
+        // Query on server so that client can access
+        // uri value set on server through `initialState`
+        await apolloClient.query({ query: uriQuery })
+
+        if (onRequestInit) {
+          await onRequestInit({ apolloClient, ctx })
+        }
       }
 
       if (!PageOrApp.getInitialProps) {

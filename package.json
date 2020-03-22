@@ -1,6 +1,6 @@
 {
   "name": "next-with-apollo-hoc",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "lib",
   "module": "esm",
   "typings": "types",
@@ -47,6 +47,7 @@
     "@types/node": "^13.9.2",
     "@types/react": "^16.9.25",
     "apollo-server-micro": "^2.11.0",
+    "babel-plugin-graphql-tag": "^2.5.0",
     "graphql": "^14.6.0",
     "graphql-tag": "^2.10.3",
     "next": "^9.3.1",
