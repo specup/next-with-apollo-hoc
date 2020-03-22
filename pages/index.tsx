@@ -1,22 +1,48 @@
-import React from 'react'
+import React, { FC } from 'react'
 import { NextPage } from 'next'
-import gql from 'graphql-tag'
 import { useQuery } from '@apollo/react-hooks'
+import { EchoDocument } from './_app'
 
-const SAY_HELLO = gql`
-  {
-    sayHello
-  }
-`
+const Hello: FC = ({ children }) => {
+  const { data, loading } = useQuery(EchoDocument, {
+    variables: { message: 'hello' },
 
-const IndexPage: NextPage = () => {
-  const { data, loading } = useQuery(SAY_HELLO)
+    // data prefetched in `onRequestInit` handler
+    fetchPolicy: 'cache-only',
+  })
 
   if (loading) {
     return <div>Loading...</div>
   }
 
-  return <div>{data.sayHello}</div>
+  return (
+    <div>
+      {data.echo}
+      {children}
+    </div>
+  )
+}
+
+const World: FC = () => {
+  const { data, loading } = useQuery(EchoDocument, {
+    variables: { message: 'world' },
+  })
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  return <div>{data.echo}</div>
+}
+
+const IndexPage: NextPage = () => {
+  return (
+    <div>
+      <Hello>
+        <World />
+      </Hello>
+    </div>
+  )
 }
 
 export default IndexPage

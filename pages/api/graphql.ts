@@ -3,14 +3,15 @@ import gql from 'graphql-tag'
 
 const typeDefs = gql`
   type Query {
-    sayHello: String
+    echo(message: String!): String!
   }
 `
 
 const resolvers = {
   Query: {
-    sayHello() {
-      return 'Hello World!'
+    echo(_root, { message }) {
+      console.log(`[graphql] echo message: "${message}"`)
+      return message
     },
   },
 }

@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react'
-import { NextPage } from 'next'
+import { NextPage, NextPageContext } from 'next'
 import App from 'next/app'
 import { IncomingHttpHeaders } from 'http'
 import { ApolloClient, ApolloClientOptions } from 'apollo-client'
@@ -24,8 +24,9 @@ function defaultTreeForData(tree: ReactNode): ReactNode {
   return tree
 }
 
-interface OnInitOnServerParams {
+interface onRequestInitParams {
   apolloClient: ApolloClient<NormalizedCacheObject>
+  ctx: NextPageContext
 }
 
 export interface WithApolloHOCOptions
@@ -36,7 +37,7 @@ export interface WithApolloHOCOptions
   uri: string
   link?: (defaultLink: ApolloLink, headers: IncomingHttpHeaders) => ApolloLink
   treeForData?: (tree: ReactNode) => ReactNode
-  onInitOnServer?: (params: OnInitOnServerParams) => Promise<any>
+  onRequestInit?: (params: onRequestInitParams) => Promise<any>
   render?: (pageOrApp: ReactNode) => ReactNode
 }
 
@@ -44,7 +45,7 @@ function withApolloHOC({
   uri,
   link = defaultInitLink,
   treeForData = defaultTreeForData,
-  onInitOnServer,
+  onRequestInit,
   render = defaultRender,
   ...other
 }: WithApolloHOCOptions) {
@@ -88,9 +89,9 @@ function withApolloHOC({
     WithApolloHOC.getInitialProps = async (pageCtx: any) => {
       const ctx = 'Component' in pageCtx ? pageCtx.ctx : pageCtx
 
-      if (!isBrowser && onInitOnServer) {
+      if (!isBrowser && onRequestInit) {
         const apolloClient: ApolloClient<any> = ctx.apolloClient
-        await onInitOnServer({ apolloClient })
+        await onRequestInit({ apolloClient, ctx })
       }
 
       if (!PageOrApp.getInitialProps) {
