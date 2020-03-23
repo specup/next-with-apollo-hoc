@@ -5,7 +5,7 @@
   "module": "esm",
   "typings": "types",
   "license": "MIT",
-  "repository": "pawsong/next-with-apollo-hoc",
+  "repository": "specup/next-with-apollo-hoc",
   "files": [
     "esm",
     "lib",
