@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { NextPage } from 'next'
 import { useQuery } from '@apollo/react-hooks'
+import Link from 'next/link'
 import { EchoDocument } from './_app'
 
 const Hello: FC = ({ children }) => {
@@ -26,6 +27,7 @@ const Hello: FC = ({ children }) => {
 const World: FC = () => {
   const { data, loading } = useQuery(EchoDocument, {
     variables: { message: 'world' },
+    fetchPolicy: 'cache-and-network',
   })
 
   if (loading) {
@@ -41,6 +43,7 @@ const IndexPage: NextPage = () => {
       <Hello>
         <World />
       </Hello>
+      <Link href="/about">Go about</Link>
     </div>
   )
 }

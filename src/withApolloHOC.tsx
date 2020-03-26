@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react'
+import React, { ReactNode, createElement, ComponentType } from 'react'
 import { NextPage, NextPageContext } from 'next'
 import App from 'next/app'
 import { IncomingHttpHeaders } from 'http'
@@ -30,8 +30,8 @@ function defaultInitLink(defaultLink: ApolloLink) {
   return defaultLink
 }
 
-function defaultRender(pageOrApp: ReactNode) {
-  return pageOrApp
+const defaultComponent: ApolloComponentType = ({ children }) => {
+  return <>{children}</>
 }
 
 function defaultTreeForData(tree: ReactNode): ReactNode {
@@ -43,6 +43,10 @@ interface onRequestInitParams {
   ctx: NextPageContext
 }
 
+export type ApolloComponentType = ComponentType<{
+  apolloClient: ApolloClient<any>
+}>
+
 export interface WithApolloHOCOptions
   extends Omit<
     Partial<ApolloClientOptions<any>>,
@@ -53,7 +57,7 @@ export interface WithApolloHOCOptions
   typeDefs?: DocumentNode | DocumentNode[]
   treeForData?: (tree: ReactNode) => ReactNode
   onRequestInit?: (params: onRequestInitParams) => Promise<any>
-  render?: (pageOrApp: ReactNode) => ReactNode
+  component?: ApolloComponentType
 }
 
 function withApolloHOC({
@@ -63,7 +67,7 @@ function withApolloHOC({
   resolvers = [],
   treeForData = defaultTreeForData,
   onRequestInit,
-  render = defaultRender,
+  component = defaultComponent,
   ...other
 }: WithApolloHOCOptions) {
   function getDataFromTree(
@@ -118,9 +122,10 @@ function withApolloHOC({
 
   return (PageOrApp: NextPage<any> | typeof App) => {
     function WithApolloHOC({ apollo, ...other }: any) {
+      const content = <PageOrApp {...other} />
       return (
         <ApolloProvider client={apollo}>
-          {render(<PageOrApp {...other} />)}
+          {createElement(component, { apolloClient: apollo }, content)}
         </ApolloProvider>
       )
     }

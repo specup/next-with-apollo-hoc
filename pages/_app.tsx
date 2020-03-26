@@ -1,12 +1,40 @@
+import React, { useEffect, useRef } from 'react'
 import App from 'next/app'
 import gql from 'graphql-tag'
-import withApolloHOC from '../src'
+import withApolloHOC, { ApolloComponentType } from '../src'
 
 export const EchoDocument = gql`
   query($message: String!) {
     echo(message: $message)
   }
 `
+function useComponentDidMount(func: () => any) {
+  useEffect(func, [])
+}
+
+function useComponentWillMount(func: () => any) {
+  const willMount = useRef(true)
+
+  if (willMount.current) {
+    func()
+  }
+
+  useComponentDidMount(() => {
+    willMount.current = false
+  })
+}
+
+const Component: ApolloComponentType = ({ apolloClient, children }) => {
+  useComponentWillMount(() => {
+    apolloClient.disableNetworkFetches = true
+  })
+
+  useComponentDidMount(() => {
+    apolloClient.disableNetworkFetches = false
+  })
+
+  return <>{children}</>
+}
 
 export default withApolloHOC({
   uri: 'http://localhost:3000/api/graphql',
@@ -19,4 +47,5 @@ export default withApolloHOC({
     })
     console.log('[onRequestInit] end')
   },
+  component: Component,
 })(App)
