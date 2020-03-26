@@ -25,6 +25,9 @@ function useComponentWillMount(func: () => any) {
 }
 
 const Component: ApolloComponentType = ({ apolloClient, children }) => {
+  // Prevent refetch data on initial render
+  // https://github.com/apollographql/apollo-client/issues/4814
+
   useComponentWillMount(() => {
     apolloClient.disableNetworkFetches = true
   })
