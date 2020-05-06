@@ -3,3 +3,5 @@ node_modules
 esm
 lib
 types
+
+yarn-error.log
