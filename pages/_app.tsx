@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import App from 'next/app'
 import gql from 'graphql-tag'
 import withApolloHOC, { ApolloComponentType } from '../src'
+import { createPersistedQueryLink } from 'apollo-link-persisted-queries'
 
 export const EchoDocument = gql`
   query($message: String!) {
@@ -39,6 +40,8 @@ const Component: ApolloComponentType = ({ apolloClient, children }) => {
   return <>{children}</>
 }
 
+const isBrowser = typeof window !== 'undefined'
+
 export default withApolloHOC({
   uri: 'http://localhost:3000/api/graphql',
   onRequestInit: async ({ apolloClient }) => {
@@ -51,4 +54,15 @@ export default withApolloHOC({
     console.log('[onRequestInit] end')
   },
   component: Component,
+  ...(isBrowser && {
+    headers: {
+      pragma: 'no-cache',
+      'cache-control': 'no-cache',
+    },
+    fetchOptions: {
+      cache: 'no-cache',
+    },
+  }),
+  link: (link) =>
+    createPersistedQueryLink({ useGETForHashedQueries: true }).concat(link),
 })(App)

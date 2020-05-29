@@ -58,6 +58,8 @@ export interface WithApolloHOCOptions
   treeForData?: (tree: ReactNode) => ReactNode
   onRequestInit?: (params: onRequestInitParams) => Promise<any>
   component?: ApolloComponentType
+  headers?: Record<string, string>
+  fetchOptions?: any
 }
 
 function withApolloHOC({
@@ -68,6 +70,8 @@ function withApolloHOC({
   treeForData = defaultTreeForData,
   onRequestInit,
   component = defaultComponent,
+  headers: defaultHeaders = {},
+  fetchOptions = {},
   ...other
 }: WithApolloHOCOptions) {
   function getDataFromTree(
@@ -97,9 +101,11 @@ function withApolloHOC({
         uri: finalURI,
         credentials: 'include', // Additional fetch() options like `credentials` or `headers`
         headers: {
+          ...defaultHeaders,
           ...headers,
           'content-type': 'application/json',
         },
+        fetchOptions,
       })
 
       return new ApolloClient({
