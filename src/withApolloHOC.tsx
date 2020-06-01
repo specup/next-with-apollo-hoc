@@ -88,7 +88,7 @@ function withApolloHOC({
   }
 
   const apolloHOC = withApollo(
-    ({ initialState, headers }) => {
+    ({ initialState, headers = {} }) => {
       const cache = new InMemoryCache().restore(initialState)
 
       let finalURI = uri
@@ -97,12 +97,15 @@ function withApolloHOC({
         finalURI = __GRAPHQL_URI__
       }
 
+      // host 헤더가 전달되면 서버 응답이 해당 host 주소 응답으로 오는 버그가 있어서 추가
+      const { host, ...sanitizedHeaders } = headers
+
       const httpLink = new HttpLink({
         uri: finalURI,
         credentials: 'include', // Additional fetch() options like `credentials` or `headers`
         headers: {
           ...defaultHeaders,
-          ...headers,
+          ...sanitizedHeaders,
           'content-type': 'application/json',
         },
         fetchOptions,
