@@ -3,7 +3,11 @@ import { NextPage, NextPageContext } from 'next'
 import App from 'next/app'
 import { IncomingHttpHeaders } from 'http'
 import { ApolloClient, ApolloClientOptions } from 'apollo-client'
-import { InMemoryCache, NormalizedCacheObject } from 'apollo-cache-inmemory'
+import {
+  InMemoryCache,
+  NormalizedCacheObject,
+  InMemoryCacheConfig,
+} from 'apollo-cache-inmemory'
 import { ApolloLink } from 'apollo-link'
 import { HttpLink } from 'apollo-link-http'
 import { ApolloProvider } from '@apollo/react-common'
@@ -60,6 +64,7 @@ export interface WithApolloHOCOptions
   component?: ApolloComponentType
   headers?: Record<string, string>
   fetchOptions?: any
+  inMemoryCacheConfig?: InMemoryCacheConfig
 }
 
 function withApolloHOC({
@@ -72,6 +77,7 @@ function withApolloHOC({
   component = defaultComponent,
   headers: defaultHeaders = {},
   fetchOptions = {},
+  inMemoryCacheConfig = {},
   ...other
 }: WithApolloHOCOptions) {
   function getDataFromTree(
@@ -89,7 +95,7 @@ function withApolloHOC({
 
   const apolloHOC = withApollo(
     ({ initialState, headers = {} }) => {
-      const cache = new InMemoryCache().restore(initialState)
+      const cache = new InMemoryCache(inMemoryCacheConfig).restore(initialState)
 
       let finalURI = uri
       if (isBrowser) {
