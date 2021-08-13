@@ -51,7 +51,7 @@
     "babel-plugin-graphql-tag": "^2.5.0",
     "graphql": "^14.6.0",
     "graphql-tag": "^2.10.3",
-    "next": "^9.3.6",
+    "next": "^11.1.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "typescript": "^3.8.3"
